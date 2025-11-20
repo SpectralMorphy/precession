@@ -7,7 +7,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 export class Viewport{
 	fow = 75
 	distance = 100
-	angle1 = 45
+	angle1 = 50
 	angle2 = 25
 	minDistance = 50
 	maxDistance = 250
