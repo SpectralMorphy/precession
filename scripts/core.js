@@ -3,6 +3,7 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { SMAAPass } from 'three/addons/postprocessing/SMAAPass.js';
 
 export class Viewport{
 	fow = 75
@@ -14,7 +15,7 @@ export class Viewport{
 	
 	scene = new THREE.Scene()
 	camera = new THREE.PerspectiveCamera(this.fow, 1, 0.1, 10000)
-	renderer = new THREE.WebGLRenderer({antialias: true})
+	renderer = new THREE.WebGLRenderer()
 	composer = new EffectComposer(this.renderer)
 	container = null
 	controls = null
@@ -24,7 +25,7 @@ export class Viewport{
 	lastUpdate = undefined
 	
 	constructor(){
-		this.composer.addPass(new RenderPass(this.scene, this.camera))
+		this.composer.addPass(new RenderPass(this.scene, this.camera))		
 		this.composer.addPass(new OutputPass())
 	
 		const cos1 = Math.cos(this.angle1 * Math.PI / 180)
@@ -39,6 +40,9 @@ export class Viewport{
 	displayOn(container){
 		this.container = container
 		this.container.appendChild(this.renderer.domElement)
+		
+		this.smaaPass = new SMAAPass(container.clientWidth, container.clientHeight);
+		this.composer.insertPass(this.smaaPass, this.composer.passes.length - 1);
 	}
 	
 	updateScale(){
@@ -47,6 +51,9 @@ export class Viewport{
 		
 		this.renderer.setSize(this.container.clientWidth, this.container.clientHeight)
 		this.composer.setSize(this.container.clientWidth, this.container.clientHeight)
+		this.smaaPass.setSize(this.container.clientWidth, this.container.clientHeight)
+		
+		this.theme?.updateScale(this.container)
 	}
 	
 	startRendering(){
@@ -98,10 +105,10 @@ export class Viewport{
 	}
 	
 	quickSetup(container, theme, object){
+		this.theme = theme
+	
 		theme.applyLight(this.scene)
-		
-		const resolution = new THREE.Vector2(container.clientWidth, container.clientHeight)
-		theme.applyEffects(this.composer, resolution, this.scene, this.camera)
+		theme.applyEffects(container, this.composer, this.scene, this.camera)
 		
 		object.createMesh()
 		object.setTheme(theme)

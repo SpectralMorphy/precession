@@ -69,7 +69,9 @@ export class Theme {
 		scene.add(ambientLight);
 	}
 	
-	applyEffects(composer, resolution, scene, camera){
+	applyEffects(container, composer, scene, camera){
+		const resolution = new THREE.Vector2(container.clientWidth, container.clientHeight)
+		
 		this.outlinePass = new OutlinePass(
 			resolution,
 			scene,
@@ -85,6 +87,10 @@ export class Theme {
 		this.outlinePass.overlayMaterial.blending = THREE.SubtractiveBlending
 		
 		composer.insertPass(this.outlinePass, composer.passes.length - 1)
+	}
+	
+	updateScale(container){
+		if(this.outlinePass) this.outlinePass.resolution = new THREE.Vector2(container.clientWidth, container.clientHeight)
 	}
 	
 	addEffectObject(object){
