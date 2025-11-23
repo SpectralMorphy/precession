@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Модель Гироскопа: Колесо на оси</title>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #1a1a1a; font-family: sans-serif; }
+        #ui {
+            position: absolute; top: 20px; left: 20px; color: #eee;
+            pointer-events: none; text-shadow: 1px 1px 2px #000;
+        }
+        h1 { margin: 0 0 10px 0; font-size: 1.1rem; color: #ffaa00; }
+        .key { color: #aaa; font-size: 0.9rem; }
+    </style>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/",
+                "lil-gui": "https://unpkg.com/lil-gui@0.19.1/dist/lil-gui.esm.min.js"
+            }
+        }
+    </script>
+</head>
+<body>
+    <div id="ui">
+        <h1>Гироскоп на подвесе</h1>
+        <div class="key">Зеленая линия: Ось вращения</div>
+        <div class="key">Желтая линия: Веревка</div>
+    </div>
+    <script type="module" src="./main.js"></script>
+</body>
+</html>

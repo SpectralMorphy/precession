@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Управляемый Гироскоп на Земле</title>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #111; font-family: sans-serif; }
+        #ui-info {
+            position: absolute; top: 10px; left: 10px; color: #0f0;
+            pointer-events: none; background: rgba(0, 20, 0, 0.85); padding: 15px;
+            border: 1px solid #0f0; border-radius: 4px; font-family: 'Courier New', monospace;
+        }
+        h1 { margin: 0 0 5px 0; font-size: 1rem; border-bottom: 1px solid #444; padding-bottom: 5px; color: #fff; }
+        .row { display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 4px; }
+        .val { font-weight: bold; color: #fff; }
+        .hl { color: #ff0; }
+    </style>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/",
+                "lil-gui": "https://unpkg.com/lil-gui@0.19.1/dist/lil-gui.esm.min.js"
+            }
+        }
+    </script>
+</head>
+<body>
+    <div id="ui-info">
+        <h1>Текущее состояние</h1>
+        <div class="row"><span>Дрейф (Азимут):</span> <span class="val" id="val-az">0.0°</span></div>
+        <div class="row"><span>Дрейф (Высота):</span> <span class="val" id="val-el">0.0°</span></div>
+        <div class="row"><span>Время симуляции:</span> <span class="val" id="val-time">00:00</span></div>
+        <div style="margin-top:10px; font-size:0.8rem; color:#aaa;">
+            Зеленая линия — ось Земли.<br>
+            Нажмите <span class="hl">Сброс</span> для применения новых углов.
+        </div>
+    </div>
+    <script type="module" src="./main.js"></script>
+</body>
+</html>
