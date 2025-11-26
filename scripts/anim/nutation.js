@@ -1,20 +1,26 @@
 import { Vector3, Quaternion } from "three"
-import { ParamHolder } from "/scripts/param.js"
+import GUI from 'lil-gui';
 
-export class NutationAnimation extends ParamHolder {
+export class NutationAnimation {
 	_getDefaultParam(){
 		return {
-			axisY: new Vector3(0, 1, 0),
-			axisZ: new Vector3(0, 0, 1),
-			angle: 12,
-			precessionSpeed: 24,
-			rotationSpeed: 360,
+			
 		}
 	}
-	
+	param;
+	sceneRef = null;
 	angleL = 0
+	rotSpd = 2;
+	setupGUI(){
+		const gui = new GUI({ width: 300 });
+			
+			const f1 = gui.addFolder('Колесо');
+			f1.add(this.param, 'rotationSpeed', 360, 1200).name('Скорость вращения колеса').listen();
+			return f1;
+		}
 	
 	update(target, dt){
+		this.param.angle = 9 * 360 / this.param.rotationSpeed;
 		const dprec = this.param.precessionSpeed * Math.PI / 180 * dt
 		const precQuat = new Quaternion().setFromAxisAngle(this.param.axisY, dprec)
 		target.applyQuaternion(precQuat)
@@ -22,7 +28,7 @@ export class NutationAnimation extends ParamHolder {
 		this.vecL.applyQuaternion(precQuat).normalize()
 		
 		const sin = Math.sin(this.param.angle * Math.PI / 180)
-		const dnut = sin ? dprec / sin : 0
+		const dnut = sin ? (dprec / sin) : 0
 		const nutQuat = new Quaternion().setFromAxisAngle(this.vecL, dnut)
 		target.applyQuaternion(nutQuat)
 		target.quaternion.normalize()
@@ -33,10 +39,13 @@ export class NutationAnimation extends ParamHolder {
 		target.applyQuaternion(rotQuat)
 		target.quaternion.normalize()
 	}
-	
+	doScene(scene)
+	{
+		// this.sceneRef = scene;
+		scene.add(this.setupGUI());
+	}
 	constructor(param){
-		super(param)
-		
+		this.param = param;
 		const axisX = new Vector3().crossVectors(this.param.axisY, this.param.axisZ)
 		this.vecL = this.param.axisZ.clone().applyAxisAngle(axisX, this.param.angle * Math.PI / 180)
 	}

@@ -6,6 +6,5 @@ import { NutationAnimation } from '/scripts/anim/nutation.js'
 const viewport = new Viewport()
 const theme = new Theme()
 const wheel = new Wheel()
-wheel.anim = new NutationAnimation()
-
+wheel.anim = new NutationAnimation(wheel.param)
 viewport.quickSetup(document.body, theme, wheel)

@@ -206,9 +206,9 @@ function resetGyro() {
 
     // !!! ГЛАВНОЕ ИЗМЕНЕНИЕ: Умножаем на направление спина (1 или -1)
     gyroVector.set(
-        L_x * params.rotorDirection,
-        L_y * params.rotorDirection,
-        L_z * params.rotorDirection
+        L_x,
+        L_y,
+        L_z
     ).normalize();
 
     trailPoints.length = 0;
@@ -240,7 +240,7 @@ function animate() {
     // 1. Визуальное вращение ротора
     if (rotorMesh) {
         // !!! ГЛАВНОЕ ИЗМЕНЕНИЕ: Умножаем на направление спина (1 или -1)
-        rotorMesh.rotation.z -= params.rotorSpeed * params.rotorDirection * dt;
+        rotorMesh.rotation.z += params.rotorSpeed * params.rotorDirection * dt;
     }
 
     // 2. Дрейф гироскопа (Кинематика: L x Omega_earth)
@@ -250,7 +250,7 @@ function animate() {
         
         // Прецессия: Вращаем вектор L вокруг оси EarthAxis в ОБРАТНУЮ сторону.
         // Эффект обратного вращения ротора уже учтен в самом векторе L (gyroVector).
-        gyroVector.applyAxisAngle(earthAxisVector, -dAngle);
+        gyroVector.applyAxisAngle(earthAxisVector, -dAngle * params.rotorDirection);
         
         simulationTime += dt * params.earthSpeedMult;
     }

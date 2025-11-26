@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { Vector3, Quaternion } from "three"	
 import { Theme } from '/scripts/theme.js'
 
 export class Wheel {
@@ -23,6 +24,11 @@ export class Wheel {
 		ropeThick: 0.6,
 		nodeThick: 2,
 		planeRadius: 60,
+		axisY: new Vector3(0, 1, 0),
+		axisZ: new Vector3(0, 0, 1),
+		angle: 12,
+		precessionSpeed: 24,
+		rotationSpeed: 360,
 	}
 
 	createMesh(){
@@ -87,6 +93,10 @@ export class Wheel {
 		scene.add(this._rope)
 		scene.add(this._node)
 		scene.add(this._plane)
+		if (this.anim != null)
+		{
+			this.anim.doScene(scene);
+		}
 	}
 	
 	update(dt){
