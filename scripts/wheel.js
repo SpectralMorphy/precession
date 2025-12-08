@@ -30,6 +30,10 @@ export class Wheel {
 		precessionSpeed: 24,
 		rotationSpeed: 360,
 	}
+	
+	constructor(){
+		this.createMesh()
+	}
 
 	createMesh(){
 		this.body = new THREE.Group()
@@ -79,13 +83,16 @@ export class Wheel {
 		this._theme = theme
 		
 		if(!this.body) return
-		theme.addEffectObject(this.body)
 		this._rim.material = theme.getMaterial(Theme.MATERIAL.SOLID_FLAT)
 		this._stick.material = theme.getMaterial(Theme.MATERIAL.SOLID_GRAY)
 		this._spokes.forEach(spoke => spoke.material = theme.getMaterial(Theme.MATERIAL.SOLID_PRIME))
 		this._rope.material = theme.getMaterial(Theme.MATERIAL.DARK)
 		this._node.material = theme.getMaterial(Theme.MATERIAL.DARK)
 		this._plane.material = theme.getMaterial(Theme.MATERIAL.DARK_TRANS)
+	}
+	
+	getEffectMesh(){
+		return this.body
 	}
 	
 	addToScene(scene){

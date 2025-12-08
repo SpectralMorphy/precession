@@ -1,11 +1,18 @@
 import * as THREE from 'three'
-import { OutlinePass } from 'three/addons/postprocessing/OutlinePass.js';
+import { OutlineShaderPass } from '/scripts/shader/outline.js'
 
 export class Theme {
 	solidMaterial = null
 	solidFlatMaterial = null
-	outlinePass = null
-	effectTargets = []
+	
+	outline = new OutlineShaderPass({
+		downSampleRatio: 0.5,
+		edgeThickness: 8,
+		edgeStrength: 9,
+		visibleEdgeColor: new THREE.Color('white'),
+		overlay_blending: THREE.SubtractiveBlending,
+		overlay_premultipliedAlpha: true,
+	})
 	
 	static MATERIAL = {
 		BACKGROUND: 0,
@@ -69,31 +76,11 @@ export class Theme {
 		scene.add(ambientLight);
 	}
 	
-	applyEffects(container, composer, scene, camera){
-		const resolution = new THREE.Vector2(container.clientWidth, container.clientHeight)
-		
-		this.outlinePass = new OutlinePass(
-			resolution,
-			scene,
-			camera,
-			this.effectTargets
-		)
-		
-		this.outlinePass.downSampleRatio = 1
-		this.outlinePass.edgeThickness = 4
-		this.outlinePass.edgeStrength = 4
-		this.outlinePass.hiddenEdgeColor = new THREE.Color('black')
-		this.outlinePass.overlayMaterial.premultipliedAlpha = true
-		this.outlinePass.overlayMaterial.blending = THREE.SubtractiveBlending
-		
-		composer.insertPass(this.outlinePass, composer.passes.length - 1)
+	getShaders(){
+		return [this.outline]
 	}
 	
 	updateScale(container){
 		if(this.outlinePass) this.outlinePass.resolution = new THREE.Vector2(container.clientWidth, container.clientHeight)
-	}
-	
-	addEffectObject(object){
-		this.effectTargets.push(object)
 	}
 }

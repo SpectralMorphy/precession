@@ -3,7 +3,7 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { SMAAPass } from 'three/addons/postprocessing/SMAAPass.js';
+import { SMAAShaderPass } from '/scripts/shader/smaa.js'
 
 export class Viewport{
 	fow = 75
@@ -13,19 +13,25 @@ export class Viewport{
 	minDistance = 50
 	maxDistance = 250
 	
+	width = 0
+	height = 0
+	
 	scene = new THREE.Scene()
 	camera = new THREE.PerspectiveCamera(this.fow, 1, 0.1, 10000)
 	renderer = new THREE.WebGLRenderer()
 	composer = new EffectComposer(this.renderer)
 	container = null
 	controls = null
+	theme = null
 	objects = []
+	shaders = []
 	
 	rendering = false
 	lastUpdate = undefined
+	maxDT = 0.1
 	
 	constructor(){
-		this.composer.addPass(new RenderPass(this.scene, this.camera))		
+		this.composer.addPass(new RenderPass(this.scene, this.camera))
 		this.composer.addPass(new OutputPass())
 	
 		const cos1 = Math.cos(this.angle1 * Math.PI / 180)
@@ -41,42 +47,57 @@ export class Viewport{
 		this.container = container
 		this.container.appendChild(this.renderer.domElement)
 		
-		this.smaaPass = new SMAAPass(container.clientWidth, container.clientHeight);
-		this.composer.insertPass(this.smaaPass, this.composer.passes.length - 1);
+		this.addShader(new SMAAShaderPass())
+		console.log(this.composer)
 	}
 	
 	updateScale(){
-		this.camera.aspect = this.container.clientWidth / this.container.clientHeight
+		if(this.width == this.container.clientWidth && this.height == this.container.clientHeight) return
+		this.width = this.container.clientWidth
+		this.height = this.container.clientHeight
+	
+		this.camera.aspect = this.width / this.height
 		this.camera.updateProjectionMatrix()
 		
-		this.renderer.setSize(this.container.clientWidth, this.container.clientHeight)
-		this.composer.setSize(this.container.clientWidth, this.container.clientHeight)
-		this.smaaPass.setSize(this.container.clientWidth, this.container.clientHeight)
+		this.renderer.setSize(this.width, this.height)
+		this.composer.setSize(this.width, this.height)
 		
-		this.theme?.updateScale(this.container)
+		for(let shader of this.shaders){
+			shader.updateScale(this.width, this.height)
+		}
 	}
 	
 	startRendering(){
 		this.rendering = true
-		this.nextFrame()
+		this._frameFlow()
 	}
 	
-	nextFrame(){
-		if(this.rendering) window.requestAnimationFrame(t => this.render(t))
+	_frameFlow(){
+		if(this.rendering) window.requestAnimationFrame(now_msec => {
+			this.render(now_msec * 0.001)
+			this._frameFlow()
+		})
+	}
+	
+	updateTime(now){
+		this.lastUpdate ??= now
+		let dt = now - this.lastUpdate
+		this.lastUpdate = now
+		
+		if(dt > this.maxDT){
+			dt = 0
+		}
+		
+		return dt
 	}
 	
 	render(now){
-		now *= 0.001
-		this.lastUpdate ??= now
-		const dt = now - this.lastUpdate
+		const dt = this.updateTime(now)
 		
 		this.objects.forEach(object => object.update(dt));
 		
 		this.updateScale()
 		this.composer.render(dt)
-		
-		this.lastUpdate = now
-		this.nextFrame()
 	}
 	
 	registerCameraControls(){
@@ -102,18 +123,47 @@ export class Viewport{
 	addObject(object){
 		this.objects.push(object)
 		object.addToScene(this.scene)
+		if(this.theme) object.setTheme(this.theme)
+		
+		for(let shader of this.shaders){
+			this.syncEffectObject(object, shader)
+		}
+	}
+	
+	addShader(shader, order){
+		order ??= -1
+		this.shaders.push(shader)
+		shader.setup(this)
+		this.composer.insertPass(shader.getPass(), this.composer.passes.length + order)
+		
+		for(let object of this.objects){
+			this.syncEffectObject(object, shader)
+		}
+	}
+	
+	syncEffectObject(object, shader){
+		shader.addEffectMesh(object.getEffectMesh())
+	}
+	
+	addShaders(list){
+		for(let shader of list){
+			this.addShader(shader)
+		}
+	}
+	
+	applyTheme(theme){
+		this.theme = theme
+		theme.applyLight(this.scene)
+		this.addShaders(theme.getShaders())
+		
+		for(let object of this.objects){
+			object.applyTheme(theme)
+		}
 	}
 	
 	quickSetup(container, theme, object){
-		this.theme = theme
-	
-		theme.applyLight(this.scene)
-		theme.applyEffects(container, this.composer, this.scene, this.camera)
-		
-		object.createMesh()
-		object.setTheme(theme)
+		this.applyTheme(theme)
 		this.addObject(object)
-		
 		this.displayOn(container)
 		this.registerCameraControls()
 		this.startRendering()
