@@ -7,7 +7,7 @@ export async function loc(){
 			return
 		}
 		
-		const resp = await fetch('/localization/ru.json')
+		const resp = await fetch('../localization/ru.json')
 		resolve(await resp.json())
 	})
 }
