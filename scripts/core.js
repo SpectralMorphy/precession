@@ -3,15 +3,15 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { SMAAShaderPass } from '/scripts/shader/smaa.js'
+import { SMAAShaderPass } from '/scripts/shader/smaa.js';
 
 export class Viewport{
 	fow = 75
-	distance = 100
+	distance = 15
 	angle1 = 50
 	angle2 = 25
-	minDistance = 50
-	maxDistance = 250
+	minDistance = 7.5
+	maxDistance = 60
 	
 	width = 0
 	height = 0
@@ -48,7 +48,6 @@ export class Viewport{
 		this.container.appendChild(this.renderer.domElement)
 		
 		this.addShader(new SMAAShaderPass())
-		console.log(this.composer)
 	}
 	
 	updateScale(){
@@ -122,7 +121,7 @@ export class Viewport{
 	
 	addObject(object){
 		this.objects.push(object)
-		object.addToScene(this.scene)
+		object.addOnScene(this.scene)
 		if(this.theme) object.setTheme(this.theme)
 		
 		for(let shader of this.shaders){
