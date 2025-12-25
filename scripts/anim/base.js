@@ -3,6 +3,7 @@ export class BaseAnimation {
 	dt = 0.0001
 	timeBuffer = 0
 	#tracking = {}
+	#paused = false
 	
 	constructor(object){
 		this.object = object
@@ -12,9 +13,11 @@ export class BaseAnimation {
 	}
 	
 	update(dt){
-		this.timeBuffer += dt
-		
 		this.checkChanges()
+		
+		if(this.isPaused()) return
+		
+		this.timeBuffer += dt
 		
 		while(this.timeBuffer > this.dt){
 			this.updateStep()
@@ -59,5 +62,13 @@ export class BaseAnimation {
 	}
 	
 	onChangeGlobal(){
+	}
+	
+	togglePause(){
+		this.#paused = !this.#paused
+	}
+	
+	isPaused(){
+		return this.#paused
 	}
 }

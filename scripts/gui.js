@@ -5,43 +5,67 @@ const LOC = await loc()
 
 export class GuiAdapter {
 	constructor(settings, loc_tag){
-		this.gui = new GUI({width: 500})
 		if(loc_tag) this.loc = LOC[loc_tag]
 		
-		for(const data of settings){
-			this._add_controller(this.gui, data, loc)
+		this.gui = new GUI({
+			width: 500,
+			title: this.getLoc('controls'),
+		})
+		
+		this._add_folder(this.gui, settings)
+	}
+	
+	_add_folder(target, folder){
+		for(const data of folder){
+			this._add_controller(target, data)
 		}
 	}
 	
-	_add_controller(target, data, loc){
+	_add_controller(target, data){
 		const name = data.name
 		const key = data.key ?? name
-		const step = data.step ?? 0.01
 		let ctrl
 		
-		if(data.value != undefined){
-			data.object[key] = data.value
-		}
-		
-		if(data.interval){
-			ctrl = target.add(data.object, key, data.interval[0], data.interval[1])
+		if(data.folder){
+			ctrl = target.addFolder(this.getLoc(name))
+			this._add_folder(ctrl, data.folder)
 		}
 		else{
-			ctrl = target.add(data.object, key)
+			if(data.value != undefined){
+				data.object[key] = data.value
+			}
+			
+			if(data.interval){
+				ctrl = target.add(data.object, key, data.interval[0], data.interval[1])
+			}
+			else{
+				ctrl = target.add(data.object, key)
+			}
+			
+			ctrl.name(this.getLoc(name))
+			
+			if(typeof(data.object[key]) == 'function'){
+				let onChange = () => {
+					if(data.onChange) data.onChange(ctrl, this)
+				}
+			
+				ctrl.onChange(() => {
+					onChange()
+					this.updateDisplay()
+				})
+				
+				onChange()
+			}
+			
+			ctrl.step(data.step ?? 0.01)
+			if(data.decimals){
+				ctrl.decimals(data.decimals)
+			}
 		}
-		
-		if(typeof(data.object[key]) == 'function'){
-			ctrl.onChange(() => this.updateDisplay())
-		}
-		
-		ctrl.step(step)
-		if(data.decimals){
-			ctrl.decimals(data.decimals)
-		}
-		
-		if(this.loc?.[name]){
-			ctrl.name(this.loc[name])
-		}
+	}
+	
+	getLoc(name){
+		return this.loc?.[name] ?? name
 	}
 	
 	updateDisplay(){

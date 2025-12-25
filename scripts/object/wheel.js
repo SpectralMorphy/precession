@@ -16,6 +16,9 @@ export class Wheel extends BaseSceneObject {
 		ringThick: 0.1,
 		planeRadius: 10,
 		ropeLen: 500,
+		textureSize: 1024,
+		stripWidth: 0.04,
+		strips: 1,
 	}
 	
 	constructor(){
@@ -25,7 +28,7 @@ export class Wheel extends BaseSceneObject {
 		wheel.position.z = this.length
 		
 		const rimGeometry = new THREE.TorusGeometry(this.radius, this.param.rimThick, 12, 16)
-		this.addToGroup('wheel', 'rim', new THREE.Mesh(rimGeometry), Theme.MATERIAL.SOLID_FLAT)
+		this.addToGroup('wheel', 'rim', new THREE.Mesh(rimGeometry), 'MATERIAL_RIM')
 		
 		const spokeGeometry = new THREE.CylinderGeometry(this.param.spokeThick, this.param.spokeThick, this.radius)
 		for(let i = 0; i < this.param.spokes; ++i){
@@ -56,6 +59,40 @@ export class Wheel extends BaseSceneObject {
 		plane.quaternion.setFromAxisAngle(new THREE.Vector3(1,0,0), Math.PI/2)
 		
 		this.addObject('grid', new THREE.PolarGridHelper(this.param.planeRadius, 32, 10, 64))
+	}
+	
+	getSpecialMaterial(tag){
+		if(tag == 'MATERIAL_RIM'){
+			const material = this.getTheme().getMaterial(Theme.MATERIAL.SOLID_FLAT).clone()
+			material.map = this.createStripTexture()
+			return material
+		}
+	}
+	
+	createStripTexture(){
+		const canvas = document.createElement('canvas')
+		canvas.width = this.param.textureSize
+		canvas.height = this.param.textureSize
+		const context = canvas.getContext('2d')
+		
+		context.fillStyle = 'black'
+		context.fillRect(0, 0, canvas.width, canvas.height)
+		
+		const stripWidth = this.param.textureSize * this.param.stripWidth
+		context.fillStyle = 'white'
+		context.fillRect(
+			stripWidth / 2,
+			0,
+			canvas.width - stripWidth,
+			canvas.height
+		)
+		
+		const texture = new THREE.CanvasTexture(canvas)
+		texture.wrapS = THREE.RepeatWrapping
+		texture.wrapT = THREE.RepeatWrapping
+		texture.offset.set(0.25, 0)
+		
+		return texture
 	}
 	
 	get dir(){

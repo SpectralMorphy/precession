@@ -1,5 +1,6 @@
 import { Vector3, Quaternion, Vector2, Matrix3 } from "three"
 import { CustomArrow } from '/scripts/shape/arrow.js'
+import { CustomLine } from '/scripts/shape/line.js'
 import { BaseAnimation } from "./base.js"
 
 var log = false
@@ -16,15 +17,15 @@ export class NutationAnimation extends BaseAnimation {
 	phase = 0
 	circle = []
 	
-	// dt = 1000//0.04
-	// dt = 0.04
+	trailDT = 0.01
+	trailMax = 10
+	#trailLength = 0
 
 	constructor(object){
 		super(object)
 		
-		this.restart()
-		
 		this.arrow = new CustomArrow(1, 0.05)
+		this.trail = new CustomLine(this.trailMax / this.trailDT)
 		
 		this.watch(object, 'radius')
 		this.watch(object, 'length')
@@ -32,6 +33,9 @@ export class NutationAnimation extends BaseAnimation {
 		this.watch(this, 'wIni')
 		this.watch(this, 'clockwise')
 		this.watch(this, 'precess')
+		
+		this.restart()
+		this.togglePause()
 	}
 	
 	restart(){
@@ -47,6 +51,11 @@ export class NutationAnimation extends BaseAnimation {
 		
 		this.qS = this.getIniQ()
 		this.vL = this.getIniL()
+		
+		this.trail.reset(this._vS())
+		this.trailBufferT = 0
+		
+		this.updateObjects()
 	}
 	
 	getIniQ(){
@@ -77,15 +86,13 @@ export class NutationAnimation extends BaseAnimation {
 		const vLhor = this.getIniL()
 		vLhor.y = 0
 		
-		console.log(vM, vLhor)
 		const precess = vM.clone().cross(vLhor).length() / vLhor.length()**2
 		this.precess = precess / Math.PI * 180
-		
-		console.log(this.precess)
 	}
 	
 	addOnScene(scene){
 		scene.add(this.arrow)
+		scene.add(this.trail)
 	}
 	
 	updateStep(){
@@ -100,10 +107,8 @@ export class NutationAnimation extends BaseAnimation {
 		const vdLn = this.vL.clone().cross(vdL).divideScalar(this.vL.length()**2)
 		const vdLt = vdL.clone().projectOnVector(this.vL)
 		
-		if(log) console.log(this.vL, this.vdLt)
 		this.vL.add(vdLt)
 		this.vL.applyAxisAngle(vdLn.clone().normalize(), vdLn.length())
-		if(log) console.log('after', this.vL)
 		
 		const angl = vS.angleTo(this.vL)
 		const dist = s * Math.sin(angl)
@@ -117,7 +122,25 @@ export class NutationAnimation extends BaseAnimation {
 		this.qS.premultiply(qdQ)
 		
 		this.calcPhase()
+		this.updateTrail()
 		this.updateObjects()
+	}
+	
+	get trailLength(){
+		return this.#trailLength
+	}
+	set trailLength(value){
+		this.#trailLength = value
+		this.trail.setDrawRange(value / this.trailDT)
+	}
+	
+	updateTrail(){
+		this.trailBufferT += this.dt
+		if(this.trailBufferT >= this.trailDT){
+			this.trailBufferT -= this.trailDT
+			
+			this.trail.push(this._vS())
+		}
 	}
 	
 	updateObjects(){
@@ -155,7 +178,6 @@ export class NutationAnimation extends BaseAnimation {
 		const vPrecDir = vStart.clone().cross(vProj).normalize()
 		if(vPrecDir.length() == 0) vPrecDir.y = 1
 		const precAngle = vStart.angleTo(vProj)
-if(log) console.log('preq', vProj, vPrecDir, precAngle)
 		return new Quaternion().setFromAxisAngle(vPrecDir, precAngle)
 	}
 	
@@ -195,7 +217,6 @@ if(log) console.log('preq', vProj, vPrecDir, precAngle)
 	}
 	
 	refresh(){
-	// log = true
 		const oldPreq = this._getPreq(this._vS())
 		const oldPhase = this.phase
 		
@@ -207,9 +228,9 @@ if(log) console.log('preq', vProj, vPrecDir, precAngle)
 		
 		this.qS.premultiply(fixPreq)
 		this.vL.applyQuaternion(fixPreq)
+		this.trail.reset(this._vS())
 		
 		this.updateObjects()
-	// log = false
 	}
 	
 	reachPhase(phase){
@@ -220,15 +241,12 @@ if(log) console.log('preq', vProj, vPrecDir, precAngle)
 		
 		while(true){
 			if(this.phase >= phase){
-				console.log(iter, this.phase, phase, this._vS(), this.vL)
-				this._logc()
 				return
 			}
 			
 			this.updateStep()
 			
 			if(this.phase < oldphase - 0.01){
-				console.log('wtf', iter, this.phase, oldphase)
 				return
 			}
 			
@@ -245,14 +263,5 @@ if(log) console.log('preq', vProj, vPrecDir, precAngle)
 			oldphase = this.phase
 			iter++
 		}
-	}
-	
-	_logc(){
-		let msg = ''
-		for(let i in this.circle){
-			const v = this.circle[i]
-			msg += 'V' + i + ' = (' + v.x + ',' + v.y + ')\n'
-		}
-		console.log(msg)
 	}
 }

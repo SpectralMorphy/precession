@@ -84,6 +84,9 @@ export class BaseSceneObject {
 		this.#anim?.addOnScene(scene)
 	}
 	
+	getTheme(){
+		return this.#theme
+	}
 	setTheme(theme){
 		this.#theme = theme
 		for(let name in this.#objects){
@@ -92,9 +95,19 @@ export class BaseSceneObject {
 	}
 	#setObjectTheme(name){
 		if(!this.#theme) return
+		
 		const materialTag = this.#materials[name]
 		if(materialTag == undefined) return
-		this.#objects[name].material = this.#theme.getMaterial(materialTag)
+		
+		if(typeof(materialTag) == 'string'){
+			this.#objects[name].material = this.getSpecialMaterial(materialTag)
+		}
+		else{
+			this.#objects[name].material = this.#theme.getMaterial(materialTag)
+		}
+	}
+	
+	getSpecialMaterial(tag){
 	}
 	
 	setAnimProto(anim){
